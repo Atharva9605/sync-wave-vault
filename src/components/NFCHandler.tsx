@@ -26,8 +26,45 @@ export const NFCHandler = ({ onBack }: NFCHandlerProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check NFC support
-    setIsNFCSupported('NDEFWriter' in window && 'NDEFReader' in window);
+    // Enhanced NFC support detection
+    const checkNFCSupport = async () => {
+      // Check for Web NFC API
+      const hasWebNFC = 'NDEFWriter' in window && 'NDEFReader' in window;
+      
+      if (hasWebNFC) {
+        try {
+          // Try to create instances to verify actual support
+          // @ts-ignore
+          const reader = new NDEFReader();
+          // @ts-ignore
+          const writer = new NDEFWriter();
+          
+          // Check permissions (optional, won't block on permission denial)
+          if ('permissions' in navigator) {
+            try {
+              // @ts-ignore
+              const permission = await navigator.permissions.query({ name: 'nfc' });
+              console.log('NFC permission:', permission.state);
+            } catch (e) {
+              console.log('NFC permission check not available');
+            }
+          }
+          
+          setIsNFCSupported(true);
+          toast({
+            title: "NFC Ready",
+            description: "Your device supports NFC transfers"
+          });
+        } catch (error) {
+          console.error('NFC instantiation failed:', error);
+          setIsNFCSupported(false);
+        }
+      } else {
+        setIsNFCSupported(false);
+      }
+    };
+
+    checkNFCSupport();
   }, []);
 
   const writeNFC = async () => {
@@ -72,8 +109,8 @@ export const NFCHandler = ({ onBack }: NFCHandlerProps) => {
       await ndef.write(message);
       
       toast({
-        title: "NFC Written",
-        description: "Transaction data written to NFC tag successfully"
+        title: "NFC Transfer Ready",
+        description: "Hold your device close to another NFC device to transfer"
       });
     } catch (error) {
       console.error('NFC write error:', error);
@@ -132,7 +169,7 @@ export const NFCHandler = ({ onBack }: NFCHandlerProps) => {
 
       toast({
         title: "NFC Scanner Active",
-        description: "Tap an NFC tag to read transaction data"
+        description: "Hold your device close to another device to receive transfer"
       });
     } catch (error) {
       console.error('NFC read error:', error);
@@ -178,15 +215,23 @@ export const NFCHandler = ({ onBack }: NFCHandlerProps) => {
       <div className="max-w-md mx-auto p-4">
         {!isNFCSupported && (
           <Card className="mb-4 border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
-                <AlertCircle className="h-4 w-4" />
-                <p className="text-sm">
-                  Web NFC is not supported on this device. This feature requires 
-                  a compatible Android device with Chrome browser.
-                </p>
-              </div>
-            </CardContent>
+             <CardContent className="pt-6">
+               <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
+                 <AlertCircle className="h-4 w-4" />
+                 <div className="text-sm">
+                   <p className="font-medium mb-2">NFC Requirements:</p>
+                   <ul className="list-disc list-inside space-y-1">
+                     <li>Android device with NFC enabled</li>
+                     <li>Chrome browser (latest version)</li>
+                     <li>HTTPS connection (secure context)</li>
+                     <li>NFC permission granted</li>
+                   </ul>
+                   <p className="mt-2">
+                     Check your device settings and ensure NFC is turned on.
+                   </p>
+                 </div>
+               </div>
+             </CardContent>
           </Card>
         )}
 
@@ -231,13 +276,13 @@ export const NFCHandler = ({ onBack }: NFCHandlerProps) => {
                   {isWriting ? "Writing to NFC..." : "Write to NFC Tag"}
                 </Button>
 
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <p className="text-sm text-muted-foreground">
-                    <strong>How it works:</strong> Tap the button above, then tap your 
-                    device to an NFC tag or another NFC-enabled device to transfer 
-                    the transaction data.
-                  </p>
-                </div>
+                 <div className="bg-muted/50 p-4 rounded-lg">
+                   <p className="text-sm text-muted-foreground">
+                     <strong>Device-to-Device Transfer:</strong> Tap "Write to NFC Tag", 
+                     then hold your device close (back-to-back) with another NFC device 
+                     running this app to transfer transaction data instantly.
+                   </p>
+                 </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -285,13 +330,13 @@ export const NFCHandler = ({ onBack }: NFCHandlerProps) => {
                   )}
                 </div>
 
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <p className="text-sm text-muted-foreground">
-                    <strong>How it works:</strong> Start the scanner, then tap your 
-                    device to an NFC tag or another NFC-enabled device that has 
-                    transaction data to receive it.
-                  </p>
-                </div>
+                 <div className="bg-muted/50 p-4 rounded-lg">
+                   <p className="text-sm text-muted-foreground">
+                     <strong>Receive Transfer:</strong> Start the scanner, then hold your 
+                     device close to another device that's broadcasting a transaction. 
+                     Make sure NFC is enabled in your device settings.
+                   </p>
+                 </div>
               </CardContent>
             </Card>
           </TabsContent>
