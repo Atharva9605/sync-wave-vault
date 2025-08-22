@@ -7,6 +7,8 @@ import { useTransactionStore } from '@/store/transactionStore';
 import { TransactionForm } from './TransactionForm';
 import { QRView } from './QRView';
 import { NFCHandler } from './NFCHandler';
+import { SplitPayment } from './SplitPayment';
+import { PaymentReminders } from './PaymentReminders';
 import { formatCurrency } from '@/lib/utils';
 import { 
   Wallet, 
@@ -19,11 +21,13 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  RefreshCw
+  RefreshCw,
+  Users,
+  Bell
 } from 'lucide-react';
 
 export const Dashboard = () => {
-  const [activeView, setActiveView] = useState<'dashboard' | 'transaction' | 'qr' | 'nfc'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'transaction' | 'qr' | 'nfc' | 'split' | 'reminders'>('dashboard');
   const { user, logout } = useAuthStore();
   const { transactions, isOnline, syncTransactions } = useTransactionStore();
 
@@ -78,6 +82,18 @@ export const Dashboard = () => {
     );
   }
 
+  if (activeView === 'split') {
+    return (
+      <SplitPayment onBack={() => setActiveView('dashboard')} />
+    );
+  }
+
+  if (activeView === 'reminders') {
+    return (
+      <PaymentReminders onBack={() => setActiveView('dashboard')} />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/10">
       {/* Header */}
@@ -129,7 +145,7 @@ export const Dashboard = () => {
         </Card>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-3 mb-4">
           <Button
             onClick={() => setActiveView('transaction')}
             className="flex flex-col gap-2 h-20"
@@ -152,6 +168,26 @@ export const Dashboard = () => {
           >
             <Nfc className="h-5 w-5" />
             <span className="text-xs">NFC</span>
+          </Button>
+        </div>
+
+        {/* Additional Features */}
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            onClick={() => setActiveView('split')}
+            variant="outline"
+            className="flex flex-col gap-2 h-16"
+          >
+            <Users className="h-5 w-5" />
+            <span className="text-xs">Split Bill</span>
+          </Button>
+          <Button
+            onClick={() => setActiveView('reminders')}
+            variant="outline"
+            className="flex flex-col gap-2 h-16"
+          >
+            <Bell className="h-5 w-5" />
+            <span className="text-xs">Reminders</span>
           </Button>
         </div>
 
